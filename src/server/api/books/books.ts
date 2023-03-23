@@ -7,7 +7,6 @@ const BooksSchema = new mongoose.Schema({
   author: {
     type: String,
     required: true,
-    unique: true,
   },
   date: {
     type: Date,
@@ -20,3 +19,4 @@ const BooksSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Books", BooksSchema);
+  

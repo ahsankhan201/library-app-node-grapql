@@ -23,6 +23,7 @@ const userTypeDefs = gql`
   type LoginResult {
     token: String!
     user: User!
+    message:String!
   }
 
   type Query {

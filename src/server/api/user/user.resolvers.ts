@@ -20,7 +20,11 @@ const userResolver = {
   Mutation: {
     createUser: async (_: any, { user }: any) => {
       const newUser = await encryptPassword(user);
-      newUser.role = "USER";
+      const userExisist = await User.findOne({ email: newUser.email });
+      if (userExisist) {
+        throw new Error("User Already Exist");
+      }
+      newUser.role = "User";
       return await User.create(newUser);
     },
 
@@ -48,7 +52,7 @@ const userResolver = {
         },
         jwtSecret
       );
-      return { token, user: loginedUser };
+      return { token, user: loginedUser, message: "Login Successfull" };
     },
 
     updateUser: async (_: any, { id, user }: any) => {

@@ -1,8 +1,9 @@
 import { UserInputError } from "apollo-server-express";
 import Book from "./books";
-import { createWriteStream } from "fs";
-import path from "path";
-
+import fs from "fs";
+var path = require("path");
+import jwt from "jsonwebtoken";
+import { jwtSecret } from "../../../configuration/connection";
 const bookResolver = {
   Query: {
     book: async (_: any, { id }: any) => {
@@ -18,23 +19,19 @@ const bookResolver = {
   },
   Mutation: {
     createBook: async (_: any, { book }: any) => {
-      const { createReadStream, filename } = await book.cover_Image;
-      const stream = createReadStream();
-      const { ext } = path.parse(filename);
-      const newFilename = `${Date.now()}${ext}`;
-      const localPath = path.join(__dirname, `../books/images/${newFilename}`);
-
-      await new Promise((resolve, reject) => {
-        stream
-          .pipe(createWriteStream(localPath))
-          .on("finish", () =>
-            resolve({ url: `http://localhost:3000/images/${newFilename}` })
-          )
-          .on("error", reject);
-      });
-
-      book.cover_Image = localPath;
-
+      const base64Image = await book.cover_Image;
+      if (!base64Image) {
+        throw new UserInputError("Cover Image Required");
+      }
+      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+      const imageBuffer = Buffer.from(base64Data, "base64");
+      const fileName = `${Date.now()}.png`;
+      const directory = path.join(__dirname, "../../../../public/images");
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+      fs.writeFileSync(path.join(directory, fileName), imageBuffer);
+      book.cover_Image = `${fileName}`;
       return await Book.create(book);
     },
 

@@ -6,7 +6,13 @@ import booksTypeDefs from "./server/api/books/books.schema";
 import bookResolver from "./server/api/books/books.resolver";
 import { mongoDBUrl } from "./configuration/connection";
 import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
-const typeDefs = mergeTypeDefs([userTypeDefs, booksTypeDefs]);  
+const express = require("express");
+const app = express();
+
+app.use(express.static(__dirname + "/public"));
+app.use(express.static("public"));
+
+const typeDefs = mergeTypeDefs([userTypeDefs, booksTypeDefs]);
 const resolvers = mergeResolvers([userResolver, bookResolver]);
 mongoose
   .connect(mongoDBUrl, {})
@@ -20,4 +26,7 @@ const server = new ApolloServer({
 
 server.listen(3000, () => {
   console.log("Server listening on http://localhost:3000/graphql");
+});
+app.listen(4243, () => {
+  console.log("Server listening on http://localhost:4243");
 });
