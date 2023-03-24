@@ -46,7 +46,7 @@ const userResolver = {
 
       const token = jwt.sign(
         {
-          userId: loginedUser._id,
+          user: loginedUser._id,
           role: loginedUser.role,
           email: loginedUser.email,
         },

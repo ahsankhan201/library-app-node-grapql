@@ -2,8 +2,6 @@ import { UserInputError } from "apollo-server-express";
 import Book from "./books";
 import fs from "fs";
 var path = require("path");
-import jwt from "jsonwebtoken";
-import { jwtSecret } from "../../../configuration/connection";
 const bookResolver = {
   Query: {
     book: async (_: any, { id }: any) => {
@@ -18,7 +16,9 @@ const bookResolver = {
     },
   },
   Mutation: {
-    createBook: async (_: any, { book }: any) => {
+    createBook: async (_: any, { book }: any, context: any) => {
+
+
       const base64Image = await book.cover_Image;
       if (!base64Image) {
         throw new UserInputError("Cover Image Required");
