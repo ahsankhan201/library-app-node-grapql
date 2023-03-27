@@ -8,6 +8,7 @@ const booksTypeDefs = gql`
     date: String!
     cover_Image: String!
     ratings: [Rating]!
+    average_rating: Float
   }
 
   type Rating {

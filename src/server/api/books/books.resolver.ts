@@ -1,15 +1,49 @@
 import { UserInputError } from "apollo-server-express";
 import Book from "./books";
 import fs from "fs";
+import { io } from "../../../app";
+import mongoose from "mongoose";
 var path = require("path");
 const bookResolver = {
   Query: {
     book: async (_: any, { id }: any) => {
-      const book = await Book.findById(id);
-      if (!book) {
+      const book = await Book.aggregate([
+        {
+          $match: { _id: new mongoose.Types.ObjectId(id) },
+        },
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "_id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+        {
+          $addFields: {
+            ratings: { $ifNull: ["$ratings", []] }
+          }
+        },
+        {
+          $addFields: {
+            average_rating: { $avg: "$ratings.stars" }
+          }
+        },
+        {
+          $project: {
+            title: 1,
+            author: 1,
+            cover_Image: 1,
+            date: 1,
+            average_rating: 1,
+            ratings:1,
+          }
+        }
+      ]);
+      if (!book || book.length === 0) {
         throw new UserInputError("Book not found");
       }
-      return book;
+      return book[0];
     },
     books: async () => {
       return Book.aggregate([
@@ -21,6 +55,26 @@ const bookResolver = {
             as: "ratings",
           },
         },
+        {
+          $addFields: {
+            ratings: { $ifNull: ["$ratings", []] }
+          }
+        },
+        {
+          $addFields: {
+            average_rating: { $avg: "$ratings.stars" }
+          }
+        },
+        {
+          $project: {
+            title: 1,
+            author: 1,
+            cover_Image: 1,
+            date: 1,
+            average_rating: 1,
+            ratings:1,
+          }
+        }
       ]);
     },
   },
@@ -47,6 +101,7 @@ const bookResolver = {
       if (!updatedBook) {
         throw new UserInputError("Book not found");
       }
+      io.emit("book-status", { book_id: id, status: updatedBook });
       return updatedBook;
     },
     deleteBook: async (_: any, { id }: any) => {

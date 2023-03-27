@@ -2,9 +2,12 @@ import { ApolloServer } from "apollo-server";
 import mongoose from "mongoose";
 import { mongoDBUrl } from "./configuration/connection";
 import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
-const express = require("express");
+import http from "http";
+import { Server } from "socket.io";
+import express from "express";
 const app = express();
-
+const socket = http.createServer(app);
+const io = new Server(socket);
 app.use(express.static(__dirname + "/public"));
 app.use(express.static("public"));
 
@@ -41,6 +44,16 @@ new ApolloServer({
   console.log("GraphQl Server is listening on Port 3000");
 });
 
-app.listen(4852, () => {
+app.listen(4000, () => {
   console.log("Image Loader Server is listening on Port 4852");
 });
+
+socket.listen(5000, () => {
+  console.log("Socket Server is Listening on Port 9800");
+});
+
+io.on("connection", (socket) => {
+  console.log("Socket is Listening....");
+});
+
+export { io };
