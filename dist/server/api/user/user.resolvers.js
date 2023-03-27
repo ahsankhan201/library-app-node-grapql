@@ -50,7 +50,7 @@ const userResolver = {
                 throw new Error("Invalid password");
             }
             const token = jsonwebtoken_1.default.sign({
-                userId: loginedUser._id,
+                user: loginedUser._id,
                 role: loginedUser.role,
                 email: loginedUser.email,
             }, connection_1.jwtSecret);

@@ -1,6 +1,7 @@
 import { UserInputError } from "apollo-server-express";
 import Shelve from "./shelve";
 import { authorization } from "../../../middleware/authorization.middleware";
+import { shelveStatus } from "../../../constants/app.constants";
 const shelveResolver = {
   Query: {
     shelves: async (_: any, context: any) => {
@@ -18,6 +19,10 @@ const shelveResolver = {
   Mutation: {
     createShelve: async (_: any, { shelve }: any, context: any) => {
       const auth = await authorization(context);
+      if (!shelveStatus.includes(shelve.status)) {
+        throw new UserInputError("Invalid Status Type");
+      }
+
       shelve.user_id = auth.user;
       return await Shelve.create(shelve);
     },
@@ -25,6 +30,9 @@ const shelveResolver = {
     updateShelve: async (_: any, { id, shelve }: any, context: any) => {
       const auth = await authorization(context);
       shelve.user_id = auth.user;
+      if (!shelveStatus.includes(shelve.status)) {
+        throw new UserInputError("Invalid Status Type");
+      }
       const updatedBook = await Shelve.findByIdAndUpdate(id, shelve, {
         new: true,
       });

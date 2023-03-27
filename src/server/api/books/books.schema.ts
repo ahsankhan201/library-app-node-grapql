@@ -1,13 +1,20 @@
-import { gql } from 'apollo-server-express';
+import { gql } from "apollo-server-express";
 
 const booksTypeDefs = gql`
-
   type Book {
     _id: ID!
     title: String!
     author: String!
     date: String!
     cover_Image: String!
+    ratings: [Rating]!
+  }
+
+  type Rating {
+    _id: ID!
+    user_id: ID!
+    stars: String!
+    comment: String!
   }
 
   input BookInput {
@@ -15,7 +22,6 @@ const booksTypeDefs = gql`
     author: String!
     cover_Image: String!
   }
-
 
   type Query {
     book(id: ID!): Book!

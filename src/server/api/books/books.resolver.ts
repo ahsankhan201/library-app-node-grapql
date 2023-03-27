@@ -12,13 +12,20 @@ const bookResolver = {
       return book;
     },
     books: async () => {
-      return await Book.find();
+      return Book.aggregate([
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "_id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+      ]);
     },
   },
   Mutation: {
     createBook: async (_: any, { book }: any, context: any) => {
-
-
       const base64Image = await book.cover_Image;
       if (!base64Image) {
         throw new UserInputError("Cover Image Required");

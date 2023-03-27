@@ -5,29 +5,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const apollo_server_1 = require("apollo-server");
 const mongoose_1 = __importDefault(require("mongoose"));
-const user_schema_1 = __importDefault(require("./server/api/user/user.schema"));
-const user_resolvers_1 = __importDefault(require("./server/api/user/user.resolvers"));
-const books_schema_1 = __importDefault(require("./server/api/books/books.schema"));
-const books_resolver_1 = __importDefault(require("./server/api/books/books.resolver"));
 const connection_1 = require("./configuration/connection");
 const merge_1 = require("@graphql-tools/merge");
 const express = require("express");
 const app = express();
 app.use(express.static(__dirname + "/public"));
 app.use(express.static("public"));
-const typeDefs = (0, merge_1.mergeTypeDefs)([user_schema_1.default, books_schema_1.default]);
-const resolvers = (0, merge_1.mergeResolvers)([user_resolvers_1.default, books_resolver_1.default]);
+const user_schema_1 = __importDefault(require("./server/api/user/user.schema"));
+const user_resolvers_1 = __importDefault(require("./server/api/user/user.resolvers"));
+const books_schema_1 = __importDefault(require("./server/api/books/books.schema"));
+const books_resolver_1 = __importDefault(require("./server/api/books/books.resolver"));
+const shelve_schema_1 = __importDefault(require("./server/api/shelve/shelve.schema"));
+const shelve_resolver_1 = __importDefault(require("./server/api/shelve/shelve.resolver"));
+const rating_schema_1 = __importDefault(require("./server/api/rating/rating.schema"));
+const rating_resolver_1 = __importDefault(require("./server/api/rating/rating.resolver"));
+const typeDefs = (0, merge_1.mergeTypeDefs)([
+    user_schema_1.default,
+    books_schema_1.default,
+    shelve_schema_1.default,
+    rating_schema_1.default,
+]);
+const resolvers = (0, merge_1.mergeResolvers)([
+    user_resolvers_1.default,
+    books_resolver_1.default,
+    shelve_resolver_1.default,
+    rating_resolver_1.default,
+]);
 mongoose_1.default
     .connect(connection_1.mongoDBUrl, {})
-    .then(() => console.log("Mongo Database Connected..."))
+    .then(() => console.log("Database Connection Sucessfull"))
     .catch((err) => console.log(err));
-const server = new apollo_server_1.ApolloServer({
+new apollo_server_1.ApolloServer({
     typeDefs,
     resolvers,
+}).listen(3000, () => {
+    console.log("GraphQl Server is listening on Port 3000");
 });
-server.listen(3000, () => {
-    console.log("Server listening on http://localhost:3000/graphql");
-});
-app.listen(4243, () => {
-    console.log("Server listening on http://localhost:4243");
+app.listen(4852, () => {
+    console.log("Image Loader Server is listening on Port 4852");
 });

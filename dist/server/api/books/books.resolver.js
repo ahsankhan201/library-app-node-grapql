@@ -26,7 +26,16 @@ const bookResolver = {
             return book;
         }),
         books: () => __awaiter(void 0, void 0, void 0, function* () {
-            return yield books_1.default.find();
+            return books_1.default.aggregate([
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "_id",
+                        foreignField: "book_id",
+                        as: "ratings",
+                    },
+                },
+            ]);
         }),
     },
     Mutation: {
