@@ -7,7 +7,14 @@ import { Server } from "socket.io";
 import express from "express";
 const app = express();
 const socket = http.createServer(app);
-const io = new Server(socket);
+const io = new Server(socket, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
 app.use(express.static(__dirname + "/public"));
 app.use(express.static("public"));
 
@@ -40,8 +47,8 @@ mongoose
 new ApolloServer({
   typeDefs,
   resolvers,
-}).listen(3000, () => {
-  console.log("GraphQl Server is listening on Port 3000");
+}).listen(3001, () => {
+  console.log("GraphQl Server is listening on Port 3001");
 });
 
 app.listen(4000, () => {
