@@ -2,11 +2,13 @@ import { UserInputError } from "apollo-server-express";
 import Rating from "./rating";
 import { authorization } from "../../../middleware/authorization.middleware";
 import { io } from "../../../app";
+import { ObjectId } from "mongodb";
+
 const ratingResolver = {
   Mutation: {
     createRating: async (_: any, { rating }: any, context: any) => {
       const auth = await authorization(context);
-      rating.user_id = auth.user;
+      rating.user_id = new ObjectId(auth.user);
       const result = await Rating.create(rating);
       const book = await Rating.find({ book_id: rating.book_id });
       io.emit("book-rating", { book_id: rating.book_id, ratings: book });
@@ -15,8 +17,7 @@ const ratingResolver = {
 
     updateRating: async (_: any, { id, rating }: any, context: any) => {
       const auth = await authorization(context);
-      rating.user_id = auth.user;
-
+      rating.user_id = new ObjectId(auth.user);
       const updatedRating = await Rating.findByIdAndUpdate(id, rating, {
         new: true,
       });

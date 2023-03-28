@@ -15,16 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const apollo_server_express_1 = require("apollo-server-express");
 const rating_1 = __importDefault(require("./rating"));
 const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
+const app_1 = require("../../../app");
+const mongodb_1 = require("mongodb");
 const ratingResolver = {
     Mutation: {
         createRating: (_, { rating }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            rating.user_id = auth.user;
-            return yield rating_1.default.create(rating);
+            rating.user_id = new mongodb_1.ObjectId(auth.user);
+            const result = yield rating_1.default.create(rating);
+            const book = yield rating_1.default.find({ book_id: rating.book_id });
+            app_1.io.emit("book-rating", { book_id: rating.book_id, ratings: book });
+            return result;
         }),
         updateRating: (_, { id, rating }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            rating.user_id = auth.user;
+            rating.user_id = new mongodb_1.ObjectId(auth.user);
             const updatedRating = yield rating_1.default.findByIdAndUpdate(id, rating, {
                 new: true,
             });

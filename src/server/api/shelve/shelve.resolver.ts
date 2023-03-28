@@ -2,17 +2,22 @@ import { UserInputError } from "apollo-server-express";
 import Shelve from "./shelve";
 import { authorization } from "../../../middleware/authorization.middleware";
 import { shelveStatus } from "../../../constants/app.constants";
+import { ObjectId } from "mongodb";
+
 const shelveResolver = {
   Query: {
-    shelves: async (_: any, context: any) => {
+    shelves: async (_: any, args: any, context: any) => {
       const auth = await authorization(context);
-      const shelve = await Shelve.find({ user_id: auth.user });
+      const shelve = await Shelve.find({ user_id: new ObjectId(auth.user) });
       return shelve;
     },
 
     shelveByStatus: async (_: any, { status }: any, context: any) => {
       const auth = await authorization(context);
-      const shelve = await Shelve.find({ status, user_id: auth.user });
+      const shelve = await Shelve.find({
+        status,
+        user_id: new ObjectId(auth.user),
+      });
       return shelve;
     },
   },
@@ -23,13 +28,27 @@ const shelveResolver = {
         throw new UserInputError("Invalid Status Type");
       }
 
-      shelve.user_id = auth.user;
-      return await Shelve.create(shelve);
+      const exist = await Shelve.findOne({
+        user_id: new ObjectId(auth.user),
+        book_id: shelve.book_id,
+      });
+
+      if (exist) {
+        shelve.user_id = new ObjectId(auth.user);
+        const id = exist._id;
+        const updatedBook = await Shelve.findByIdAndUpdate(id, shelve, {
+          new: true,
+        });
+        return updatedBook;
+      } else {
+        shelve.user_id = new ObjectId(auth.user);
+        return await Shelve.create(shelve);
+      }
     },
 
     updateShelve: async (_: any, { id, shelve }: any, context: any) => {
       const auth = await authorization(context);
-      shelve.user_id = auth.user;
+      shelve.user_id = new ObjectId(auth.user);
       if (!shelveStatus.includes(shelve.status)) {
         throw new UserInputError("Invalid Status Type");
       }

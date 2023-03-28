@@ -3,14 +3,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.io = void 0;
 const apollo_server_1 = require("apollo-server");
 const mongoose_1 = __importDefault(require("mongoose"));
 const connection_1 = require("./configuration/connection");
 const merge_1 = require("@graphql-tools/merge");
-const express = require("express");
-const app = express();
-app.use(express.static(__dirname + "/public"));
-app.use(express.static("public"));
+const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
+const express_1 = __importDefault(require("express"));
+const app = (0, express_1.default)();
+const socket = http_1.default.createServer(app);
+const io = new socket_io_1.Server(socket, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+        credentials: true,
+    },
+});
+exports.io = io;
+app.use(express_1.default.static(__dirname + "/public"));
+app.use(express_1.default.static("public"));
 const user_schema_1 = __importDefault(require("./server/api/user/user.schema"));
 const user_resolvers_1 = __importDefault(require("./server/api/user/user.resolvers"));
 const books_schema_1 = __importDefault(require("./server/api/books/books.schema"));
@@ -38,9 +50,25 @@ mongoose_1.default
 new apollo_server_1.ApolloServer({
     typeDefs,
     resolvers,
-}).listen(3000, () => {
-    console.log("GraphQl Server is listening on Port 3000");
+    context: ({ req }) => {
+        const context = {
+            token: "", // set default value
+        };
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.split(" ")[0] === "Bearer") {
+            context.token = authHeader.split(" ")[1];
+        }
+        return context;
+    },
+}).listen(3001, () => {
+    console.log("GraphQl Server is listening on Port 3001");
 });
-app.listen(4852, () => {
+app.listen(4000, () => {
     console.log("Image Loader Server is listening on Port 4852");
+});
+socket.listen(5000, () => {
+    console.log("Socket Server is Listening on Port 9800");
+});
+io.on("connection", (socket) => {
+    console.log("Socket is Listening....");
 });

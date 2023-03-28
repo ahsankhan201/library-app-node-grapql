@@ -7,7 +7,7 @@ exports.authorization = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const connection_1 = require("../configuration/connection");
 const authorization = (context) => {
-    const token = getTokenFromHeader(context);
+    const { token } = context;
     if (!token) {
         throw new Error("No token provided");
     }
@@ -21,11 +21,4 @@ const authorization = (context) => {
     }
 };
 exports.authorization = authorization;
-const getTokenFromHeader = (context) => {
-    const authHeader = context.req.headers.authorization;
-    if (authHeader && authHeader.split(" ")[0] === "Bearer") {
-        return authHeader.split(" ")[1];
-    }
-    return null;
-};
 module.exports = { authorization: exports.authorization };

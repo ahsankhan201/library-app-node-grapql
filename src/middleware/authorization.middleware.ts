@@ -2,7 +2,8 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { jwtSecret } from "../configuration/connection";
 
 export const authorization = (context: any) => {
-  const token = getTokenFromHeader(context);
+
+  const {token}=context;
   if (!token) {
     throw new Error("No token provided");
   }
@@ -13,14 +14,6 @@ export const authorization = (context: any) => {
   } catch (error) {
     throw new Error("Invalid token");
   }
-};
-
-const getTokenFromHeader = (context: any): string | null => {
-  const authHeader = context.req.headers.authorization;
-  if (authHeader && authHeader.split(" ")[0] === "Bearer") {
-    return authHeader.split(" ")[1];
-  }
-  return null;
 };
 
 module.exports = { authorization };

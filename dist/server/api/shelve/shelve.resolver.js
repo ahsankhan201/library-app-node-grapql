@@ -16,16 +16,20 @@ const apollo_server_express_1 = require("apollo-server-express");
 const shelve_1 = __importDefault(require("./shelve"));
 const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
 const app_constants_1 = require("../../../constants/app.constants");
+const mongodb_1 = require("mongodb");
 const shelveResolver = {
     Query: {
-        shelves: (_, context) => __awaiter(void 0, void 0, void 0, function* () {
+        shelves: (_, args, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            const shelve = yield shelve_1.default.find({ user_id: auth.user });
+            const shelve = yield shelve_1.default.find({ user_id: new mongodb_1.ObjectId(auth.user) });
             return shelve;
         }),
         shelveByStatus: (_, { status }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            const shelve = yield shelve_1.default.find({ status, user_id: auth.user });
+            const shelve = yield shelve_1.default.find({
+                status,
+                user_id: new mongodb_1.ObjectId(auth.user),
+            });
             return shelve;
         }),
     },
@@ -35,12 +39,26 @@ const shelveResolver = {
             if (!app_constants_1.shelveStatus.includes(shelve.status)) {
                 throw new apollo_server_express_1.UserInputError("Invalid Status Type");
             }
-            shelve.user_id = auth.user;
-            return yield shelve_1.default.create(shelve);
+            const exist = yield shelve_1.default.findOne({
+                user_id: new mongodb_1.ObjectId(auth.user),
+                book_id: shelve.book_id,
+            });
+            if (exist) {
+                shelve.user_id = new mongodb_1.ObjectId(auth.user);
+                const id = exist._id;
+                const updatedBook = yield shelve_1.default.findByIdAndUpdate(id, shelve, {
+                    new: true,
+                });
+                return updatedBook;
+            }
+            else {
+                shelve.user_id = new mongodb_1.ObjectId(auth.user);
+                return yield shelve_1.default.create(shelve);
+            }
         }),
         updateShelve: (_, { id, shelve }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            shelve.user_id = auth.user;
+            shelve.user_id = new mongodb_1.ObjectId(auth.user);
             if (!app_constants_1.shelveStatus.includes(shelve.status)) {
                 throw new apollo_server_express_1.UserInputError("Invalid Status Type");
             }

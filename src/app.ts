@@ -47,6 +47,16 @@ mongoose
 new ApolloServer({
   typeDefs,
   resolvers,
+  context: ({ req }) => {
+    const context = {
+      token: "", // set default value
+    };
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.split(" ")[0] === "Bearer") {
+      context.token = authHeader.split(" ")[1];
+    }
+    return context;
+  },
 }).listen(3001, () => {
   console.log("GraphQl Server is listening on Port 3001");
 });

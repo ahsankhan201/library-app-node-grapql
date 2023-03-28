@@ -9,6 +9,7 @@ const booksTypeDefs = (0, apollo_server_express_1.gql) `
     date: String!
     cover_Image: String!
     ratings: [Rating]!
+    average_rating: Float
   }
 
   type Rating {

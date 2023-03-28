@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
+var Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
+
 const ShelveSchema = new mongoose.Schema({
   user_id: {
-    type: String,
+    type: ObjectId,
     required: true,
   },
   book_id: {

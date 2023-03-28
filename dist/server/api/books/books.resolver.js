@@ -15,15 +15,50 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const apollo_server_express_1 = require("apollo-server-express");
 const books_1 = __importDefault(require("./books"));
 const fs_1 = __importDefault(require("fs"));
+const app_1 = require("../../../app");
+const mongoose_1 = __importDefault(require("mongoose"));
+const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
 var path = require("path");
 const bookResolver = {
     Query: {
         book: (_, { id }) => __awaiter(void 0, void 0, void 0, function* () {
-            const book = yield books_1.default.findById(id);
-            if (!book) {
+            const book = yield books_1.default.aggregate([
+                {
+                    $match: { _id: new mongoose_1.default.Types.ObjectId(id) },
+                },
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "_id",
+                        foreignField: "book_id",
+                        as: "ratings",
+                    },
+                },
+                {
+                    $addFields: {
+                        ratings: { $ifNull: ["$ratings", []] },
+                    },
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: "$ratings.stars" },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        author: 1,
+                        cover_Image: 1,
+                        date: 1,
+                        average_rating: 1,
+                        ratings: 1,
+                    },
+                },
+            ]);
+            if (!book || book.length === 0) {
                 throw new apollo_server_express_1.UserInputError("Book not found");
             }
-            return book;
+            return book[0];
         }),
         books: () => __awaiter(void 0, void 0, void 0, function* () {
             return books_1.default.aggregate([
@@ -35,11 +70,35 @@ const bookResolver = {
                         as: "ratings",
                     },
                 },
+                {
+                    $addFields: {
+                        ratings: { $ifNull: ["$ratings", []] },
+                    },
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: "$ratings.stars" },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        author: 1,
+                        cover_Image: 1,
+                        date: 1,
+                        average_rating: 1,
+                        ratings: 1,
+                    },
+                },
             ]);
         }),
     },
     Mutation: {
         createBook: (_, { book }, context) => __awaiter(void 0, void 0, void 0, function* () {
+            const auth = yield (0, authorization_middleware_1.authorization)(context);
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+                throw new Error("You are not allowded to perform this action");
+            }
             const base64Image = yield book.cover_Image;
             if (!base64Image) {
                 throw new apollo_server_express_1.UserInputError("Cover Image Required");
@@ -55,14 +114,23 @@ const bookResolver = {
             book.cover_Image = `${fileName}`;
             return yield books_1.default.create(book);
         }),
-        updateBook: (_, { id, book }) => __awaiter(void 0, void 0, void 0, function* () {
+        updateBook: (_, { id, book }, context) => __awaiter(void 0, void 0, void 0, function* () {
+            const auth = yield (0, authorization_middleware_1.authorization)(context);
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+                throw new Error("You are not allowded to perform this action");
+            }
             const updatedBook = yield books_1.default.findByIdAndUpdate(id, book, { new: true });
             if (!updatedBook) {
                 throw new apollo_server_express_1.UserInputError("Book not found");
             }
+            app_1.io.emit("book-status", { book_id: id, status: updatedBook });
             return updatedBook;
         }),
-        deleteBook: (_, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+        deleteBook: (_, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
+            const auth = yield (0, authorization_middleware_1.authorization)(context);
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+                throw new Error("You are not allowded to perform this action");
+            }
             const book = yield books_1.default.findByIdAndDelete(id);
             if (!book) {
                 throw new apollo_server_express_1.UserInputError("Book not found");

@@ -3,6 +3,7 @@ import Book from "./books";
 import fs from "fs";
 import { io } from "../../../app";
 import mongoose from "mongoose";
+import { authorization } from "../../../middleware/authorization.middleware";
 var path = require("path");
 const bookResolver = {
   Query: {
@@ -21,13 +22,13 @@ const bookResolver = {
         },
         {
           $addFields: {
-            ratings: { $ifNull: ["$ratings", []] }
-          }
+            ratings: { $ifNull: ["$ratings", []] },
+          },
         },
         {
           $addFields: {
-            average_rating: { $avg: "$ratings.stars" }
-          }
+            average_rating: { $avg: "$ratings.stars" },
+          },
         },
         {
           $project: {
@@ -36,9 +37,9 @@ const bookResolver = {
             cover_Image: 1,
             date: 1,
             average_rating: 1,
-            ratings:1,
-          }
-        }
+            ratings: 1,
+          },
+        },
       ]);
       if (!book || book.length === 0) {
         throw new UserInputError("Book not found");
@@ -57,13 +58,13 @@ const bookResolver = {
         },
         {
           $addFields: {
-            ratings: { $ifNull: ["$ratings", []] }
-          }
+            ratings: { $ifNull: ["$ratings", []] },
+          },
         },
         {
           $addFields: {
-            average_rating: { $avg: "$ratings.stars" }
-          }
+            average_rating: { $avg: "$ratings.stars" },
+          },
         },
         {
           $project: {
@@ -72,14 +73,18 @@ const bookResolver = {
             cover_Image: 1,
             date: 1,
             average_rating: 1,
-            ratings:1,
-          }
-        }
+            ratings: 1,
+          },
+        },
       ]);
     },
   },
   Mutation: {
     createBook: async (_: any, { book }: any, context: any) => {
+      const auth = await authorization(context);
+      if (auth?.role != "Admin") {
+        throw new Error("You are not allowded to perform this action");
+      }
       const base64Image = await book.cover_Image;
       if (!base64Image) {
         throw new UserInputError("Cover Image Required");
@@ -96,7 +101,11 @@ const bookResolver = {
       return await Book.create(book);
     },
 
-    updateBook: async (_: any, { id, book }: any) => {
+    updateBook: async (_: any, { id, book }: any, context: any) => {
+      const auth = await authorization(context);
+      if (auth?.role != "Admin") {
+        throw new Error("You are not allowded to perform this action");
+      }
       const updatedBook = await Book.findByIdAndUpdate(id, book, { new: true });
       if (!updatedBook) {
         throw new UserInputError("Book not found");
@@ -104,7 +113,11 @@ const bookResolver = {
       io.emit("book-status", { book_id: id, status: updatedBook });
       return updatedBook;
     },
-    deleteBook: async (_: any, { id }: any) => {
+    deleteBook: async (_: any, { id }: any, context: any) => {
+      const auth = await authorization(context);
+      if (auth?.role != "Admin") {
+        throw new Error("You are not allowded to perform this action");
+      }
       const book = await Book.findByIdAndDelete(id);
       if (!book) {
         throw new UserInputError("Book not found");
