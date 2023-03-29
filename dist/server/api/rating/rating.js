@@ -16,7 +16,7 @@ const RatingSchema = new mongoose_1.default.Schema({
         required: true,
     },
     stars: {
-        type: String,
+        type: Number,
         required: true,
     },
     comment: {
