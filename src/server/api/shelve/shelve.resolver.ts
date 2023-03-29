@@ -21,6 +21,20 @@ const shelveResolver = {
           },
         },
         {
+          $lookup: {
+            from: "books",
+            localField: "ratings.book_id",
+            foreignField: "_id",
+            as: "book",
+          },
+        },
+        {
+          $unwind: {
+            path: "$book",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $addFields: {
             ratings: { $ifNull: ["$ratings", []] },
           },
@@ -39,6 +53,7 @@ const shelveResolver = {
             created_at: 1,
             average_rating: 1,
             ratings: 1,
+            book: 1,
           },
         },
       ]);
@@ -112,8 +127,8 @@ const shelveResolver = {
         shelve.user_id = new ObjectId(auth.user);
         shelve.book_id = new ObjectId(shelve.book_id);
 
-      const result= await Shelve.create(shelve);
-      return result;
+        const result = await Shelve.create(shelve);
+        return result;
       }
     },
 
