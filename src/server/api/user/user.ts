@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { roles } from "../../../constants/app.constants";
 var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const UserSchema = new mongoose.Schema({
@@ -18,7 +19,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  role: { type: String, default: "User", },
+  role: { type: String, default: roles.USER },
 });
 
 export default mongoose.model("User", UserSchema);

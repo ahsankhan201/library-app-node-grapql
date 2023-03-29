@@ -17,6 +17,7 @@ const books_1 = __importDefault(require("./books"));
 const fs_1 = __importDefault(require("fs"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
+const app_constants_1 = require("../../../constants/app.constants");
 var path = require("path");
 const bookResolver = {
     Query: {
@@ -95,7 +96,7 @@ const bookResolver = {
         }),
         createBook: (_, { book }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != app_constants_1.roles.ADMIN) {
                 throw new Error("You are not allowded to perform this action");
             }
             const base64Image = yield book.cover_Image;
@@ -115,9 +116,22 @@ const bookResolver = {
         }),
         updateBook: (_, { id, book }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != app_constants_1.roles.ADMIN) {
                 throw new Error("You are not allowded to perform this action");
             }
+            const base64Image = yield book.cover_Image;
+            if (!base64Image) {
+                throw new apollo_server_express_1.UserInputError("Cover Image Required");
+            }
+            const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+            const imageBuffer = Buffer.from(base64Data, "base64");
+            const fileName = `${Date.now()}.png`;
+            const directory = path.join(__dirname, "../../../../public/images");
+            if (!fs_1.default.existsSync(directory)) {
+                fs_1.default.mkdirSync(directory, { recursive: true });
+            }
+            fs_1.default.writeFileSync(path.join(directory, fileName), imageBuffer);
+            book.cover_Image = `${fileName}`;
             const updatedBook = yield books_1.default.findByIdAndUpdate(id, book, { new: true });
             if (!updatedBook) {
                 throw new apollo_server_express_1.UserInputError("Book not found");
@@ -126,7 +140,7 @@ const bookResolver = {
         }),
         deleteBook: (_, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
+            if ((auth === null || auth === void 0 ? void 0 : auth.role) != app_constants_1.roles.ADMIN) {
                 throw new Error("You are not allowded to perform this action");
             }
             const book = yield books_1.default.findByIdAndDelete(id);

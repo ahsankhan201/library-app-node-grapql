@@ -1,9 +1,9 @@
 import { UserInputError } from "apollo-server-express";
 import Book from "./books";
 import fs from "fs";
-import { io } from "../../../app";
 import mongoose from "mongoose";
 import { authorization } from "../../../middleware/authorization.middleware";
+import { roles } from "../../../constants/app.constants";
 var path = require("path");
 const bookResolver = {
   Query: {
@@ -83,7 +83,7 @@ const bookResolver = {
 
     createBook: async (_: any, { book }: any, context: any) => {
       const auth = await authorization(context);
-      if (auth?.role != "Admin") {
+      if (auth?.role != roles.ADMIN) {
         throw new Error("You are not allowded to perform this action");
       }
       const base64Image = await book.cover_Image;
@@ -104,9 +104,23 @@ const bookResolver = {
 
     updateBook: async (_: any, { id, book }: any, context: any) => {
       const auth = await authorization(context);
-      if (auth?.role != "Admin") {
+      if (auth?.role != roles.ADMIN) {
         throw new Error("You are not allowded to perform this action");
       }
+      const base64Image = await book.cover_Image;
+      if (!base64Image) {
+        throw new UserInputError("Cover Image Required");
+      }
+      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+      const imageBuffer = Buffer.from(base64Data, "base64");
+      const fileName = `${Date.now()}.png`;
+      const directory = path.join(__dirname, "../../../../public/images");
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+      fs.writeFileSync(path.join(directory, fileName), imageBuffer);
+      book.cover_Image = `${fileName}`;
+
       const updatedBook = await Book.findByIdAndUpdate(id, book, { new: true });
       if (!updatedBook) {
         throw new UserInputError("Book not found");
@@ -115,7 +129,7 @@ const bookResolver = {
     },
     deleteBook: async (_: any, { id }: any, context: any) => {
       const auth = await authorization(context);
-      if (auth?.role != "Admin") {
+      if (auth?.role != roles.ADMIN) {
         throw new Error("You are not allowded to perform this action");
       }
       const book = await Book.findByIdAndDelete(id);
