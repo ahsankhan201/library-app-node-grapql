@@ -49,11 +49,12 @@ const userResolver = {
             if (!isValidPassword) {
                 throw new Error("Invalid password");
             }
-            const token = jsonwebtoken_1.default.sign({
+            const payload = {
                 user: loginedUser._id,
                 role: loginedUser.role,
                 email: loginedUser.email,
-            }, connection_1.jwtSecret);
+            };
+            const token = jsonwebtoken_1.default.sign(payload, connection_1.jwtSecret, { algorithm: 'HS256' });
             return { token, user: loginedUser, message: "Login Successfull" };
         }),
         updateUser: (_, { id, user }) => __awaiter(void 0, void 0, void 0, function* () {

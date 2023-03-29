@@ -7,6 +7,40 @@ import { authorization } from "../../../middleware/authorization.middleware";
 var path = require("path");
 const bookResolver = {
   Query: {
+    books: async () => {
+      return Book.aggregate([
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "_id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+        {
+          $addFields: {
+            ratings: { $ifNull: ["$ratings", []] },
+          },
+        },
+        {
+          $addFields: {
+            average_rating: { $avg: "$ratings.stars" },
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            author: 1,
+            cover_Image: 1,
+            date: 1,
+            average_rating: 1,
+            ratings: 1,
+          },
+        },
+      ]);
+    },
+  },
+  Mutation: {
     book: async (_: any, { id }: any) => {
       const book = await Book.aggregate([
         {
@@ -46,40 +80,7 @@ const bookResolver = {
       }
       return book[0];
     },
-    books: async () => {
-      return Book.aggregate([
-        {
-          $lookup: {
-            from: "ratings",
-            localField: "_id",
-            foreignField: "book_id",
-            as: "ratings",
-          },
-        },
-        {
-          $addFields: {
-            ratings: { $ifNull: ["$ratings", []] },
-          },
-        },
-        {
-          $addFields: {
-            average_rating: { $avg: "$ratings.stars" },
-          },
-        },
-        {
-          $project: {
-            title: 1,
-            author: 1,
-            cover_Image: 1,
-            date: 1,
-            average_rating: 1,
-            ratings: 1,
-          },
-        },
-      ]);
-    },
-  },
-  Mutation: {
+
     createBook: async (_: any, { book }: any, context: any) => {
       const auth = await authorization(context);
       if (auth?.role != "Admin") {
@@ -110,7 +111,6 @@ const bookResolver = {
       if (!updatedBook) {
         throw new UserInputError("Book not found");
       }
-      io.emit("book-status", { book_id: id, status: updatedBook });
       return updatedBook;
     },
     deleteBook: async (_: any, { id }: any, context: any) => {

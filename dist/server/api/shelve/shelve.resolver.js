@@ -17,20 +17,87 @@ const shelve_1 = __importDefault(require("./shelve"));
 const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
 const app_constants_1 = require("../../../constants/app.constants");
 const mongodb_1 = require("mongodb");
+const mongoose_1 = __importDefault(require("mongoose"));
 const shelveResolver = {
     Query: {
         shelves: (_, args, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            const shelve = yield shelve_1.default.find({ user_id: new mongodb_1.ObjectId(auth.user) });
-            return shelve;
+            return yield shelve_1.default.aggregate([
+                {
+                    $match: { user_id: new mongoose_1.default.Types.ObjectId(auth.user) },
+                },
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "book_id",
+                        foreignField: "book_id",
+                        as: "ratings",
+                    },
+                },
+                {
+                    $addFields: {
+                        ratings: { $ifNull: ["$ratings", []] },
+                    },
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: "$ratings.stars" },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        user_id: 1,
+                        book_id: 1,
+                        status: 1,
+                        created_at: 1,
+                        average_rating: 1,
+                        ratings: 1,
+                    },
+                },
+            ]);
         }),
         shelveByStatus: (_, { status }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
-            const shelve = yield shelve_1.default.find({
-                status,
-                user_id: new mongodb_1.ObjectId(auth.user),
-            });
-            return shelve;
+            return yield shelve_1.default.aggregate([
+                {
+                    $match: {
+                        $and: [
+                            { user_id: new mongoose_1.default.Types.ObjectId(auth.user) },
+                            { status },
+                        ],
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "book_id",
+                        foreignField: "book_id",
+                        as: "ratings",
+                    },
+                },
+                {
+                    $addFields: {
+                        ratings: { $ifNull: ["$ratings", []] },
+                    },
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: "$ratings.stars" },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 1,
+                        user_id: 1,
+                        book_id: 1,
+                        status: 1,
+                        created_at: 1,
+                        average_rating: 1,
+                        ratings: 1,
+                    },
+                },
+            ]);
         }),
     },
     Mutation: {
@@ -41,10 +108,11 @@ const shelveResolver = {
             }
             const exist = yield shelve_1.default.findOne({
                 user_id: new mongodb_1.ObjectId(auth.user),
-                book_id: shelve.book_id,
+                book_id: new mongodb_1.ObjectId(shelve.book_id),
             });
             if (exist) {
                 shelve.user_id = new mongodb_1.ObjectId(auth.user);
+                shelve.book_id = new mongodb_1.ObjectId(shelve.book_id);
                 const id = exist._id;
                 const updatedBook = yield shelve_1.default.findByIdAndUpdate(id, shelve, {
                     new: true,
@@ -53,7 +121,9 @@ const shelveResolver = {
             }
             else {
                 shelve.user_id = new mongodb_1.ObjectId(auth.user);
-                return yield shelve_1.default.create(shelve);
+                shelve.book_id = new mongodb_1.ObjectId(shelve.book_id);
+                const result = yield shelve_1.default.create(shelve);
+                return result;
             }
         }),
         updateShelve: (_, { id, shelve }, context) => __awaiter(void 0, void 0, void 0, function* () {

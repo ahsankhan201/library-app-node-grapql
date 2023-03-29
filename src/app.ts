@@ -62,11 +62,11 @@ new ApolloServer({
 });
 
 app.listen(4000, () => {
-  console.log("Image Loader Server is listening on Port 4852");
+  console.log("Image Loader Server is listening on Port 4000");
 });
 
 socket.listen(5000, () => {
-  console.log("Socket Server is Listening on Port 9800");
+  console.log("Socket Server is Listening on Port 5000");
 });
 
 io.on("connection", (socket) => {

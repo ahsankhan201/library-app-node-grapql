@@ -15,12 +15,45 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const apollo_server_express_1 = require("apollo-server-express");
 const books_1 = __importDefault(require("./books"));
 const fs_1 = __importDefault(require("fs"));
-const app_1 = require("../../../app");
 const mongoose_1 = __importDefault(require("mongoose"));
 const authorization_middleware_1 = require("../../../middleware/authorization.middleware");
 var path = require("path");
 const bookResolver = {
     Query: {
+        books: () => __awaiter(void 0, void 0, void 0, function* () {
+            return books_1.default.aggregate([
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "_id",
+                        foreignField: "book_id",
+                        as: "ratings",
+                    },
+                },
+                {
+                    $addFields: {
+                        ratings: { $ifNull: ["$ratings", []] },
+                    },
+                },
+                {
+                    $addFields: {
+                        average_rating: { $avg: "$ratings.stars" },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        author: 1,
+                        cover_Image: 1,
+                        date: 1,
+                        average_rating: 1,
+                        ratings: 1,
+                    },
+                },
+            ]);
+        }),
+    },
+    Mutation: {
         book: (_, { id }) => __awaiter(void 0, void 0, void 0, function* () {
             const book = yield books_1.default.aggregate([
                 {
@@ -60,40 +93,6 @@ const bookResolver = {
             }
             return book[0];
         }),
-        books: () => __awaiter(void 0, void 0, void 0, function* () {
-            return books_1.default.aggregate([
-                {
-                    $lookup: {
-                        from: "ratings",
-                        localField: "_id",
-                        foreignField: "book_id",
-                        as: "ratings",
-                    },
-                },
-                {
-                    $addFields: {
-                        ratings: { $ifNull: ["$ratings", []] },
-                    },
-                },
-                {
-                    $addFields: {
-                        average_rating: { $avg: "$ratings.stars" },
-                    },
-                },
-                {
-                    $project: {
-                        title: 1,
-                        author: 1,
-                        cover_Image: 1,
-                        date: 1,
-                        average_rating: 1,
-                        ratings: 1,
-                    },
-                },
-            ]);
-        }),
-    },
-    Mutation: {
         createBook: (_, { book }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
             if ((auth === null || auth === void 0 ? void 0 : auth.role) != "Admin") {
@@ -123,7 +122,6 @@ const bookResolver = {
             if (!updatedBook) {
                 throw new apollo_server_express_1.UserInputError("Book not found");
             }
-            app_1.io.emit("book-status", { book_id: id, status: updatedBook });
             return updatedBook;
         }),
         deleteBook: (_, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {

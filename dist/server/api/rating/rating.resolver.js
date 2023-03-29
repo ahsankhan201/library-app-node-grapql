@@ -22,14 +22,15 @@ const ratingResolver = {
         createRating: (_, { rating }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
             rating.user_id = new mongodb_1.ObjectId(auth.user);
+            rating.book_id = new mongodb_1.ObjectId(rating.book_id);
             const result = yield rating_1.default.create(rating);
-            const book = yield rating_1.default.find({ book_id: rating.book_id });
-            app_1.io.emit("book-rating", { book_id: rating.book_id, ratings: book });
+            broadCast(rating.book_id);
             return result;
         }),
         updateRating: (_, { id, rating }, context) => __awaiter(void 0, void 0, void 0, function* () {
             const auth = yield (0, authorization_middleware_1.authorization)(context);
             rating.user_id = new mongodb_1.ObjectId(auth.user);
+            rating.book_id = new mongodb_1.ObjectId(rating.book_id);
             const updatedRating = yield rating_1.default.findByIdAndUpdate(id, rating, {
                 new: true,
             });
@@ -40,4 +41,8 @@ const ratingResolver = {
         }),
     },
 };
+const broadCast = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const book = yield rating_1.default.find({ book_id: id });
+    app_1.io.emit("book-rating", { book_id: id, ratings: book });
+});
 exports.default = ratingResolver;

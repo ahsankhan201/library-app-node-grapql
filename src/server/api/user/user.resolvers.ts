@@ -44,14 +44,13 @@ const userResolver = {
         throw new Error("Invalid password");
       }
 
-      const token = jwt.sign(
-        {
-          user: loginedUser._id,
-          role: loginedUser.role,
-          email: loginedUser.email,
-        },
-        jwtSecret
-      );
+      const payload = {
+        user: loginedUser._id,
+        role: loginedUser.role,
+        email: loginedUser.email,
+      };
+
+      const token = jwt.sign(payload, jwtSecret, { algorithm: 'HS256' });
       return { token, user: loginedUser, message: "Login Successfull" };
     },
 

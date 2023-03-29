@@ -12,7 +12,7 @@ const ShelveSchema = new mongoose_1.default.Schema({
         required: true,
     },
     book_id: {
-        type: String,
+        type: ObjectId,
         required: true,
     },
     status: {

@@ -26,11 +26,11 @@ const booksTypeDefs = (0, apollo_server_express_1.gql) `
   }
 
   type Query {
-    book(id: ID!): Book!
     books: [Book]!
   }
 
   type Mutation {
+    book(id: ID!): Book!
     createBook(book: BookInput!): Book!
     updateBook(id: ID!, book: BookInput!): Book!
     deleteBook(id: ID!): Book!

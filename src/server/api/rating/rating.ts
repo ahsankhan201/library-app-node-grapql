@@ -8,7 +8,7 @@ const RatingSchema = new mongoose.Schema({
     required: true,
   },
   book_id: {
-    type: String,
+    type: ObjectId,
     required: true,
   },
   stars: {

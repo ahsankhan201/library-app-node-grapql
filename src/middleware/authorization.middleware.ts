@@ -9,7 +9,7 @@ export const authorization = (context: any) => {
   }
   try {
     const secret = jwtSecret;
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = jwt.verify(token, secret,{ algorithms: ['HS256'] }) as JwtPayload;
     return decoded;
   } catch (error) {
     throw new Error("Invalid token");

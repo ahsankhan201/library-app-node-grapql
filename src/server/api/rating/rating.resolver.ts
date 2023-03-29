@@ -9,15 +9,17 @@ const ratingResolver = {
     createRating: async (_: any, { rating }: any, context: any) => {
       const auth = await authorization(context);
       rating.user_id = new ObjectId(auth.user);
+      rating.book_id = new ObjectId(rating.book_id);
       const result = await Rating.create(rating);
-      const book = await Rating.find({ book_id: rating.book_id });
-      io.emit("book-rating", { book_id: rating.book_id, ratings: book });
+      broadCast(rating.book_id)
       return result;
     },
 
     updateRating: async (_: any, { id, rating }: any, context: any) => {
       const auth = await authorization(context);
       rating.user_id = new ObjectId(auth.user);
+      rating.book_id = new ObjectId(rating.book_id);
+
       const updatedRating = await Rating.findByIdAndUpdate(id, rating, {
         new: true,
       });
@@ -27,6 +29,11 @@ const ratingResolver = {
       return updatedRating;
     },
   },
+};
+
+ const broadCast = async (id: any) => {
+  const book = await Rating.find({ book_id: id });
+  io.emit("book-rating", { book_id: id, ratings: book });
 };
 
 export default ratingResolver;

@@ -13,7 +13,7 @@ const authorization = (context) => {
     }
     try {
         const secret = connection_1.jwtSecret;
-        const decoded = jsonwebtoken_1.default.verify(token, secret);
+        const decoded = jsonwebtoken_1.default.verify(token, secret, { algorithms: ['HS256'] });
         return decoded;
     }
     catch (error) {

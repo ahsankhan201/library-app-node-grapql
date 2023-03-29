@@ -3,22 +3,88 @@ import Shelve from "./shelve";
 import { authorization } from "../../../middleware/authorization.middleware";
 import { shelveStatus } from "../../../constants/app.constants";
 import { ObjectId } from "mongodb";
-
+import mongoose from "mongoose";
 const shelveResolver = {
   Query: {
     shelves: async (_: any, args: any, context: any) => {
       const auth = await authorization(context);
-      const shelve = await Shelve.find({ user_id: new ObjectId(auth.user) });
-      return shelve;
+      return await Shelve.aggregate([
+        {
+          $match: { user_id: new mongoose.Types.ObjectId(auth.user) },
+        },
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+        {
+          $addFields: {
+            ratings: { $ifNull: ["$ratings", []] },
+          },
+        },
+        {
+          $addFields: {
+            average_rating: { $avg: "$ratings.stars" },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            book_id: 1,
+            status: 1,
+            created_at: 1,
+            average_rating: 1,
+            ratings: 1,
+          },
+        },
+      ]);
     },
 
     shelveByStatus: async (_: any, { status }: any, context: any) => {
       const auth = await authorization(context);
-      const shelve = await Shelve.find({
-        status,
-        user_id: new ObjectId(auth.user),
-      });
-      return shelve;
+      return await Shelve.aggregate([
+        {
+          $match: {
+            $and: [
+              { user_id: new mongoose.Types.ObjectId(auth.user) },
+              { status },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+        {
+          $addFields: {
+            ratings: { $ifNull: ["$ratings", []] },
+          },
+        },
+        {
+          $addFields: {
+            average_rating: { $avg: "$ratings.stars" },
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            user_id: 1,
+            book_id: 1,
+            status: 1,
+            created_at: 1,
+            average_rating: 1,
+            ratings: 1,
+          },
+        },
+      ]);
     },
   },
   Mutation: {
@@ -30,11 +96,13 @@ const shelveResolver = {
 
       const exist = await Shelve.findOne({
         user_id: new ObjectId(auth.user),
-        book_id: shelve.book_id,
+        book_id: new ObjectId(shelve.book_id),
       });
 
       if (exist) {
         shelve.user_id = new ObjectId(auth.user);
+        shelve.book_id = new ObjectId(shelve.book_id);
+
         const id = exist._id;
         const updatedBook = await Shelve.findByIdAndUpdate(id, shelve, {
           new: true,
@@ -42,7 +110,10 @@ const shelveResolver = {
         return updatedBook;
       } else {
         shelve.user_id = new ObjectId(auth.user);
-        return await Shelve.create(shelve);
+        shelve.book_id = new ObjectId(shelve.book_id);
+
+      const result= await Shelve.create(shelve);
+      return result;
       }
     },
 

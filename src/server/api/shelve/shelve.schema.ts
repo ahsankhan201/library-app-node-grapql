@@ -6,7 +6,17 @@ const shelveTypeDefs = gql`
     user_id: ID!
     book_id: ID!
     status: String!
+    ratings: [Rating]!
+    average_rating: Float
   }
+
+  type Rating {
+    _id: ID!
+    user_id: ID!
+    stars: String!
+    comment: String!
+  }
+
 
   input ShelveInput {
     book_id: ID!
@@ -15,7 +25,7 @@ const shelveTypeDefs = gql`
 
   type Query {
     shelves: [Shelve]!
-    shelveByStatus(status: String!): Shelve!
+    shelveByStatus(status: String!): [Shelve]!
   }
 
   type Mutation {
