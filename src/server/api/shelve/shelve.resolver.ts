@@ -57,6 +57,8 @@ const shelveResolver = {
             book: 1,
           },
         },
+        { $sort: { created_at: -1 } },
+
       ]);
     },
 
@@ -88,11 +90,12 @@ const shelveResolver = {
         {
           $lookup: {
             from: "ratings",
-            localField: "book.-id",
+            localField: "book._id",
             foreignField: "book_id",
             as: "ratings",
           },
         },
+
         {
           $addFields: {
             ratings: { $ifNull: ["$ratings", []] },
@@ -112,8 +115,10 @@ const shelveResolver = {
             created_at: 1,
             average_rating: 1,
             ratings: 1,
+            book: 1,
           },
         },
+        { $sort: { created_at: -1 } },
       ]);
     },
   },
