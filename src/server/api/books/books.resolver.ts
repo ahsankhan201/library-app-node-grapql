@@ -108,20 +108,26 @@ const bookResolver = {
       if (auth?.role != roles.ADMIN) {
         throw new Error("You are not allowded to perform this action");
       }
-      const base64Image = await book.cover_Image;
-      if (!base64Image) {
-        throw new UserInputError("Cover Image Required");
-      }
-      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
-      const imageBuffer = Buffer.from(base64Data, "base64");
-      const fileName = `${Date.now()}.png`;
-      const directory = path.join(__dirname, "../../../../public/images");
-      if (!fs.existsSync(directory)) {
-        fs.mkdirSync(directory, { recursive: true });
-      }
-      fs.writeFileSync(path.join(directory, fileName), imageBuffer);
-      book.cover_Image = `${fileName}`;
 
+      if(!book.cover_Image?.includes(".png")){
+
+        const base64Image = await book.cover_Image;
+        if (!base64Image) {
+          throw new UserInputError("Cover Image Required");
+        }
+        const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+        const imageBuffer = Buffer.from(base64Data, "base64");
+        const fileName = `${Date.now()}.png`;
+        const directory = path.join(__dirname, "../../../../public/images");
+        if (!fs.existsSync(directory)) {
+          fs.mkdirSync(directory, { recursive: true });
+        }
+        fs.writeFileSync(path.join(directory, fileName), imageBuffer);
+        book.cover_Image = `${fileName}`;
+  
+
+      }
+      
       const updatedBook = await Book.findByIdAndUpdate(id, book, { new: true });
       if (!updatedBook) {
         throw new UserInputError("Book not found");
