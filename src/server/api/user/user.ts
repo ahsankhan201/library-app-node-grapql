@@ -3,10 +3,6 @@ import { roles } from "../../../constants/app.constants";
 var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const UserSchema = new mongoose.Schema({
-  _id: {
-    type: ObjectId,
-    required: true,
-  },
   name: {
     type: String,
     required: true,
