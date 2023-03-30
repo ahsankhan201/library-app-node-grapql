@@ -9,6 +9,7 @@ const shelveTypeDefs = (0, apollo_server_express_1.gql) `
     status: String!
     ratings: [Rating]!
     average_rating: Float
+    book:Book
   }
 
   type Rating {
@@ -16,6 +17,14 @@ const shelveTypeDefs = (0, apollo_server_express_1.gql) `
     user_id: ID!
     stars: String!
     comment: String!
+  }
+
+  type Book {
+    _id: ID!
+    title: String!
+    author: String!
+    date: String!
+    cover_Image: String!
   }
 
 

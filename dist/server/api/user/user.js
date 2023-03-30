@@ -8,10 +8,6 @@ const app_constants_1 = require("../../../constants/app.constants");
 var Schema = mongoose_1.default.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const UserSchema = new mongoose_1.default.Schema({
-    _id: {
-        type: ObjectId,
-        required: true,
-    },
     name: {
         type: String,
         required: true,

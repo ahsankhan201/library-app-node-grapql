@@ -51,6 +51,7 @@ const bookResolver = {
                         ratings: 1,
                     },
                 },
+                { $sort: { date: -1 } },
             ]);
         }),
     },

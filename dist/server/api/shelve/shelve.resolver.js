@@ -28,8 +28,22 @@ const shelveResolver = {
                 },
                 {
                     $lookup: {
-                        from: "ratings",
+                        from: "books",
                         localField: "book_id",
+                        foreignField: "_id",
+                        as: "book",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$book",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "book._id",
                         foreignField: "book_id",
                         as: "ratings",
                     },
@@ -53,8 +67,10 @@ const shelveResolver = {
                         created_at: 1,
                         average_rating: 1,
                         ratings: 1,
+                        book: 1,
                     },
                 },
+                { $sort: { created_at: -1 } },
             ]);
         }),
         shelveByStatus: (_, { status }, context) => __awaiter(void 0, void 0, void 0, function* () {
@@ -70,8 +86,22 @@ const shelveResolver = {
                 },
                 {
                     $lookup: {
-                        from: "ratings",
+                        from: "books",
                         localField: "book_id",
+                        foreignField: "_id",
+                        as: "book",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$book",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "ratings",
+                        localField: "book._id",
                         foreignField: "book_id",
                         as: "ratings",
                     },
@@ -95,8 +125,10 @@ const shelveResolver = {
                         created_at: 1,
                         average_rating: 1,
                         ratings: 1,
+                        book: 1,
                     },
                 },
+                { $sort: { created_at: -1 } },
             ]);
         }),
     },

@@ -71,4 +71,7 @@ socket.listen(5000, () => {
 });
 io.on("connection", (socket) => {
     console.log("Socket is Listening....");
+    socket.on("disconnect", () => {
+        console.log("Socket is Disconnected....");
+    });
 });
