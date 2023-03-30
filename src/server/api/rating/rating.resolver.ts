@@ -10,11 +10,27 @@ const ratingResolver = {
   Mutation: {
     createRating: async (_: any, { rating }: any, context: any) => {
       const auth = await authorization(context);
-      rating.user_id = new ObjectId(auth.user);
-      rating.book_id = new ObjectId(rating.book_id);
-      const result = await Rating.create(rating);
-      broadCast(rating.book_id);
-      return result;
+      const exist = await Rating.findOne({
+        user_id: new ObjectId(auth.user),
+        book_id: new ObjectId(rating.book_id),
+      });
+
+      if (exist) {
+        rating.user_id = new ObjectId(auth.user);
+        rating.book_id = new ObjectId(rating.book_id);
+        const id = exist._id;
+        const updatedBook = await Rating.findByIdAndUpdate(id, rating, {
+          new: true,
+        });
+        broadCast(rating.book_id);
+        return updatedBook;
+      } else {
+        rating.user_id = new ObjectId(auth.user);
+        rating.book_id = new ObjectId(rating.book_id);
+        const result = await Rating.create(rating);
+        broadCast(rating.book_id);
+        return result;
+      }
     },
 
     updateRating: async (_: any, { id, rating }: any, context: any) => {

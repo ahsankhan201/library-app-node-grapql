@@ -14,16 +14,8 @@ const shelveResolver = {
         },
         {
           $lookup: {
-            from: "ratings",
-            localField: "book_id",
-            foreignField: "book_id",
-            as: "ratings",
-          },
-        },
-        {
-          $lookup: {
             from: "books",
-            localField: "ratings.book_id",
+            localField: "book_id",
             foreignField: "_id",
             as: "book",
           },
@@ -34,6 +26,15 @@ const shelveResolver = {
             preserveNullAndEmptyArrays: true,
           },
         },
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "book._id",
+            foreignField: "book_id",
+            as: "ratings",
+          },
+        },
+
         {
           $addFields: {
             ratings: { $ifNull: ["$ratings", []] },
@@ -72,8 +73,22 @@ const shelveResolver = {
         },
         {
           $lookup: {
-            from: "ratings",
+            from: "books",
             localField: "book_id",
+            foreignField: "_id",
+            as: "book",
+          },
+        },
+        {
+          $unwind: {
+            path: "$book",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "ratings",
+            localField: "book.-id",
             foreignField: "book_id",
             as: "ratings",
           },
